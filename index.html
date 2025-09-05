@@ -194,7 +194,33 @@
     (function() {
       const STORAGE_KEY = 'todo-app-v1';
 
-      /** @type {{items: Array<{id:string,text:string,completed:boolean,createdAt:number}>, filter: 'all'|'active'|'completed'}} */
+      /**
+       * @typedef {Object} TodoItem
+       * @property {string} id Unique identifier for a todo.
+       * @property {string} text User-provided task text.
+       * @property {boolean} completed Completion status.
+       * @property {number} createdAt Timestamp in ms when the item was created.
+       */
+
+      /** @typedef {'all'|'active'|'completed'} Filter */
+
+      /**
+       * @typedef {Object} AppState
+       * @property {TodoItem[]} items List of todos.
+       * @property {Filter} filter Active list filter.
+       */
+
+      /**
+       * @typedef {Object} ButtonOptions
+       * @property {string} [action] Data-action identifier for focus restoration.
+       * @property {string} text Visible label text.
+       * @property {string} icon Emoji or text icon.
+       * @property {string} [className] Base class, defaults to 'icon-btn'.
+       * @property {string} [extraClass] Optional extra class (e.g., 'danger').
+       * @property {() => void} [onClick] Click handler.
+       */
+
+      /** @type {AppState} */
       let state = { items: [], filter: 'all' };
 
       // Elements
@@ -207,7 +233,7 @@
       const $clear = document.getElementById('clear-completed');
       const $addBtn = document.getElementById('add-btn');
 
-      // Load state
+      // Load state from localStorage (best-effort). Invalid data is ignored.
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
@@ -217,6 +243,10 @@
         }
       } catch (_) { /* ignore */ }
 
+      /**
+       * Persist current state to localStorage.
+       * Swallows storage errors (private mode or quota) and logs a warning.
+       */
       function persist() {
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -225,6 +255,11 @@
         }
       }
 
+      /**
+       * Generate a unique identifier.
+       * Uses crypto.randomUUID when available, falling back to time+random.
+       * @returns {string}
+       */
       function uid() {
         if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
           return crypto.randomUUID();
@@ -232,6 +267,10 @@
         return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
       }
 
+      /**
+       * Add a new todo item to the beginning of the list.
+       * @param {string} text Raw input text.
+       */
       function addItem(text) {
         const t = text.trim();
         if (!t) return;
@@ -240,17 +279,30 @@
         render();
       }
 
+      /**
+       * Toggle completion for a given item.
+       * @param {string} id Todo id.
+       */
       function toggleItem(id) {
         const it = state.items.find(i => i.id === id);
         if (it) { it.completed = !it.completed; persist(); render(); }
       }
 
+      /**
+       * Delete an item by id.
+       * @param {string} id Todo id.
+       */
       function deleteItem(id) {
         state.items = state.items.filter(i => i.id !== id);
         persist();
         render();
       }
 
+      /**
+       * Update an item's text if non-empty after trimming.
+       * @param {string} id Todo id.
+       * @param {string} newText New text content.
+       */
       function updateItem(id, newText) {
         const it = state.items.find(i => i.id === id);
         if (!it) return;
@@ -261,12 +313,17 @@
         render();
       }
 
+      /** Clear all completed items. */
       function clearCompleted() {
         state.items = state.items.filter(i => !i.completed);
         persist();
         render();
       }
 
+      /**
+       * Set the active filter and re-render if valid.
+       * @param {Filter} f Filter value.
+       */
       function setFilter(f) {
         if (f !== 'all' && f !== 'active' && f !== 'completed') return;
         state.filter = f;
@@ -274,6 +331,10 @@
         render();
       }
 
+      /**
+       * Compute items after applying current filter.
+       * @returns {TodoItem[]}
+       */
       function filteredItems() {
         switch (state.filter) {
           case 'active': return state.items.filter(i => !i.completed);
@@ -282,10 +343,20 @@
         }
       }
 
+      /**
+       * Count non-completed items.
+       * @returns {number}
+       */
       function itemsLeftCount() {
         return state.items.reduce((acc, i) => acc + (i.completed ? 0 : 1), 0);
       }
 
+      /**
+       * Create an icon button with text.
+       * Used to DRY up button creation for actions.
+       * @param {ButtonOptions} opts
+       * @returns {HTMLButtonElement}
+       */
       function makeIconButton({ action, text, icon, className = 'icon-btn', extraClass = '', onClick }) {
         const btn = document.createElement('button');
         btn.type = 'button';
@@ -302,7 +373,13 @@
         return btn;
       }
 
+      /**
+       * Render the UI based on current state.
+       * Preserves focus across renders for inputs, checkboxes, and action buttons
+       * to keep keyboard interactions stable.
+       */
       function render() {
+        // Capture focus intent for restoration after DOM updates.
         const activeEl = document.activeElement;
         let preserve = null;
         if (activeEl) {
@@ -318,6 +395,7 @@
           }
         }
 
+        // Rebuild list (small dataset). For larger data, consider targeted updates.
         const items = filteredItems();
         $list.innerHTML = '';
         const frag = document.createDocumentFragment();
@@ -353,18 +431,22 @@
         }
         $list.append(frag);
 
+        // Update count with proper pluralization (announced via role="status").
         const count = itemsLeftCount();
         $countNumber.textContent = String(count);
         $countLabel.textContent = count === 1 ? 'item left' : 'items left';
 
+        // Update filter pressed state.
         for (const b of $filters) {
           const isActive = b.dataset.filter === state.filter;
           b.setAttribute('aria-pressed', String(isActive));
         }
 
+        // Toggle button states.
         $clear.disabled = state.items.every(i => !i.completed);
         $addBtn.disabled = !$input.value.trim();
 
+        // Restore focus when possible.
         if (preserve) {
           if (preserve.type === 'input') {
             $input.focus();
@@ -378,6 +460,13 @@
         }
       }
 
+      /**
+       * Enter inline edit mode for an item, wiring Save/Cancel and keyboard shortcuts.
+       * Commits on Enter and blur (if non-empty), or cancels on Escape.
+       * @param {string} id Todo id.
+       * @param {HTMLLIElement} li The list item element for this todo.
+       * @param {string} currentText The current text to prefill the editor with.
+       */
       function beginEdit(id, li, currentText) {
         const textEl = li.querySelector('.text');
         const actions = li.querySelector('.row');
@@ -405,12 +494,14 @@
 
         actions.append(saveBtn, cancelBtn);
 
+        // Keyboard handling for quick commit/cancel.
         const finishOnEnter = (e) => {
           if (e.key === 'Enter') { e.preventDefault(); saveBtn.click(); }
           else if (e.key === 'Escape') { e.preventDefault(); render(); }
         };
         input.addEventListener('keydown', finishOnEnter);
         input.addEventListener('blur', () => {
+          // Commit on blur if value is non-empty; otherwise revert to view mode.
           if (document.activeElement !== saveBtn && document.activeElement !== cancelBtn) {
             const v = input.value.trim();
             if (v) updateItem(id, v); else render();
@@ -418,6 +509,7 @@
         }, { once: true });
       }
 
+      // Form submit: add an item and clear the input before rendering.
       $form.addEventListener('submit', (e) => {
         e.preventDefault();
         const v = $input.value.trim();
@@ -426,12 +518,16 @@
         addItem(v);
       });
 
+      // Toggle "Add" button enabled state based on input content.
       $input.addEventListener('input', () => { $addBtn.disabled = !$input.value.trim(); });
 
+      // Filter buttons
       for (const b of $filters) { b.addEventListener('click', () => setFilter(b.dataset.filter)); }
 
+      // Clear completed
       $clear.addEventListener('click', clearCompleted);
 
+      // Initial render
       render();
     })();
   </script>
