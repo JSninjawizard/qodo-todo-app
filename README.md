@@ -222,7 +222,36 @@ _All issues below were automatically detected by the `/fix` workflow._
 
 
 
-#### /generate-best-practices 
+#### /generate-best-practices workflow
 - 📝 Generated `Project Best Practices` in separate file named best_practices.md
 
 
+
+#### /unit-test workflow
+- 📝 Generated Unit Test Plan and Implementation for index.html
+- Tested `Step 3 — Behaviors to Test` - everything worked, manually checked
+- Tested `Step 3 — Behaviors to Test` - everything worked, manually checked
+- Created automatic test
+
+ PASS  tests/app.test.js
+  Todo App
+    ✓ adds a todo on submit (trim), clears input, updates count (27 ms)
+    ✓ ignores empty/whitespace-only submissions (7 ms)
+    ✓ toggles completion via checkbox and updates count/class (9 ms)
+    ✓ clears completed items (8 ms)
+    ✓ filters items and updates aria-pressed (9 ms)
+    ✓ edit -> save updates item text (7 ms)
+    ✓ edit -> cancel reverts without changes (4 ms)
+    ✓ logs warning when localStorage persist fails (4 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       8 passed, 8 total
+Snapshots:   0 total
+Time:        0.543 s, estimated 1 s
+
+#### FAQ
+1. How to run automatic test?
+Install and run tests:
+> open terminal
+> npm install
+> npm test
