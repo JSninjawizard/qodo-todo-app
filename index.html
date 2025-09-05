@@ -370,18 +370,17 @@
           const chk = document.createElement('input');
           chk.type = 'checkbox';
           chk.className = 'chk';
+          chk.id = `chk-${i.id}`;
+          chk.name = 'completed';
+          chk.value = i.id;
           chk.checked = i.completed;
-          chk.setAttribute('aria-label', ''); // cleared in favor of labelledby
 
-          // text
-          const text = document.createElement('div');
+          // text label associated with checkbox
+          const text = document.createElement('label');
           text.className = 'text';
-          const textId = `text-${i.id}`;
-          text.id = textId;
+          text.setAttribute('for', chk.id);
           text.textContent = i.text;
 
-          // Associate checkbox with its text for better a11y
-          chk.setAttribute('aria-labelledby', textId);
           chk.addEventListener('change', () => toggleItem(i.id));
 
           // actions
@@ -416,8 +415,11 @@
           delBtn.append(delIcon, delText);
           delBtn.addEventListener('click', () => deleteItem(i.id));
 
-          actions.append(editBtn, delBtn);
-          li.append(chk, text, actions);
+          li.append(chk, text);
+          const actionsWrap = document.createElement('div');
+          actionsWrap.className = 'row';
+          actionsWrap.append(editBtn, delBtn);
+          li.append(actionsWrap);
           frag.append(li);
         }
         $list.append(frag);
@@ -456,6 +458,8 @@
         // Replace text with input
         const input = document.createElement('input');
         input.className = 'edit-input';
+        input.id = `edit-${id}`;
+        input.name = 'edit-todo';
         input.value = currentText;
         input.setAttribute('aria-label', 'Edit todo');
         textEl.replaceWith(input);
