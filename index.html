@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Todo App</title>
+  <!-- Content Security Policy: allow self and inline for this single-file app -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; base-uri 'self'; form-action 'self'">
+  <style>
+    :root {
+      --bg: #0f172a;           /* slate-900 */
+      --panel: #111827;        /* gray-900 */
+      --muted: #94a3b8;        /* slate-400 */
+      --text: #e5e7eb;         /* gray-200 */
+      --accent: #22d3ee;       /* cyan-400 */
+      --accent-2: #38bdf8;     /* sky-400 */
+      --danger: #f87171;       /* red-400 */
+      --success: #34d399;      /* green-400 */
+      --border: #1f2937;       /* gray-800 */
+      --shadow: 0 10px 25px rgba(0,0,0,.35);
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu,
+        Cantarell, Noto Sans, Helvetica Neue, Arial, "Apple Color Emoji",
+        "Segoe UI Emoji";
+      color: var(--text);
+      background: radial-gradient(1200px 700px at 10% 10%, #0b1222 0%, #0a1020 40%, var(--bg) 100%);
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 720px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      /* Use hidden for broader compatibility; clip may not be supported everywhere */
+      overflow: hidden;
+    }
+
+    header {
+      padding: 22px 22px 12px 22px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0));
+    }
+
+    .title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 12px 0;
+      letter-spacing: 0.2px;
+    }
+
+    .title .logo {
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: radial-gradient(100% 100% at 0% 0%, var(--accent) 0%, var(--accent-2) 100%);
+      color: #0b1222;
+      font-weight: 900;
+      box-shadow: 0 8px 16px rgba(56,189,248,.35), inset 0 -2px 6px rgba(0,0,0,.25);
+    }
+
+    .title h1 {
+      font-size: 20px;
+      font-weight: 800;
+      margin: 0;
+    }
+
+    .muted { color: var(--muted); }
+
+    form#todo-form {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+    }
+
+    .input {
+      display: flex;
+      align-items: center;
+      background: #0b1222;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 10px;
+      gap: 8px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+    }
+    .input input[type="text"] {
+      background: transparent;
+      border: 0;
+      outline: none;
+      color: var(--text);
+      width: 100%;
+      font-size: 15px;
+    }
+
+    .btn-primary {
+      background: radial-gradient(120% 120% at 0% 0%, var(--accent) 0%, var(--accent-2) 100%);
+      color: #07121f;
+      font-weight: 700;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 10px 18px rgba(56,189,248,.28), inset 0 -2px 6px rgba(0,0,0,.25);
+    }
+    .btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+
+    main { padding: 10px; }
+
+    .panel {
+      background: #0b1222;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 6px;
+    }
+
+    ul#todo-list { list-style: none; margin: 0; padding: 0; }
+
+    .item {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      border-radius: 8px;
+    }
+    .item + .item { border-top: 1px dashed #1b2434; }
+
+    .item:hover { background: rgba(255,255,255,0.03); }
+
+    .item .text { word-break: break-word; }
+    .item.completed .text { text-decoration: line-through; color: #6b7280; }
+
+    .chk {
+      width: 18px; height: 18px; accent-color: var(--success);
+    }
+
+    .row { display: flex; align-items: center; gap: 8px; }
+
+    .icon-btn {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: #0f1627;
+      color: var(--text);
+      border-radius: 8px;
+      padding: 6px 8px;
+      cursor: pointer;
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 13px;
+    }
+    .icon-btn:hover { filter: brightness(1.1); }
+    .icon-btn.danger { color: var(--danger); }
+
+    .icon { opacity: .8; }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 10px;
+      align-items: center;
+      padding: 12px;
+      border-top: 1px solid var(--border);
+      margin-top: 8px;
+    }
+
+    .filters { display: inline-flex; gap: 6px; background: #0f1627; padding: 4px; border-radius: 999px; border: 1px solid var(--border); }
+    .filter {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .filter[aria-pressed="true"] { background: #0b1222; color: var(--text); border: 1px solid var(--border); }
+
+    .count { color: var(--muted); font-size: 14px; }
+
+    .edit-input {
+      width: 100%;
+      background: #0a1323;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-size: 14px;
+    }
+
+    footer { padding: 14px; text-align: center; color: var(--muted); font-size: 12px; }
+
+    @media (max-width: 520px) {
+      .controls { grid-template-columns: 1fr; gap: 8px; }
+      .filters { justify-content: space-between; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" aria-label="Todo application">
+    <header>
+      <div class="title">
+        <div class="logo" aria-hidden="true">✓</div>
+        <h1>Todos</h1>
+        <span class="muted">Fast, simple, and local</span>
+      </div>
+      <form id="todo-form" autocomplete="off" aria-label="Add a new task">
+        <div class="input" role="group" aria-label="New todo">
+          <input id="todo-input" name="todo" type="text" placeholder="What needs to be done?" aria-label="Todo text" />
+        </div>
+        <button class="btn-primary" type="submit" id="add-btn">Add</button>
+      </form>
+    </header>
+    <main>
+      <section class="panel">
+        <ul id="todo-list" aria-live="polite" aria-relevant="additions removals"></ul>
+        <div class="controls">
+          <div class="count"><span id="items-left">0</span> <span id="items-left-label">items left</span></div>
+          <div class="filters" aria-label="Filters">
+            <button class="filter" type="button" data-filter="all" aria-pressed="true">All</button>
+            <button class="filter" type="button" data-filter="active" aria-pressed="false">Active</button>
+            <button class="filter" type="button" data-filter="completed" aria-pressed="false">Completed</button>
+          </div>
+          <button id="clear-completed" class="icon-btn" type="button" title="Clear completed tasks">
+            <span class="icon" aria-hidden="true">🧹</span>
+            <span>Clear completed</span>
+          </button>
+        </div>
+      </section>
+    </main>
+    <footer>
+      Data is stored locally in your browser. No network required.
+    </footer>
+  </div>
+
+  <script>
+    (function() {
+      const STORAGE_KEY = 'todo-app-v1';
+
+      /** @type {{items: Array<{id:string,text:string,completed:boolean,createdAt:number}>, filter: 'all'|'active'|'completed'}} */
+      let state = { items: [], filter: 'all' };
+
+      // Elements
+      const $form = document.getElementById('todo-form');
+      const $input = document.getElementById('todo-input');
+      const $list = document.getElementById('todo-list');
+      const $countNumber = document.getElementById('items-left');
+      const $countLabel = document.getElementById('items-left-label');
+      const $filters = Array.from(document.querySelectorAll('.filter'));
+      const $clear = document.getElementById('clear-completed');
+      const $addBtn = document.getElementById('add-btn');
+
+      // Load state
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const data = JSON.parse(raw);
+          if (Array.isArray(data.items)) state.items = data.items;
+          if (data.filter === 'all' || data.filter === 'active' || data.filter === 'completed') state.filter = data.filter;
+        }
+      } catch (_) { /* ignore */ }
+
+      function persist() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch (e) {
+          console.warn('Persist failed (localStorage unavailable or quota exceeded):', e);
+        }
+      }
+
+      function uid() {
+        // Prefer cryptographically strong UUID when available
+        if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+          return crypto.randomUUID();
+        }
+        return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+      }
+
+      function addItem(text) {
+        const t = text.trim();
+        if (!t) return;
+        state.items.unshift({ id: uid(), text: t, completed: false, createdAt: Date.now() });
+        persist();
+        render();
+      }
+
+      function toggleItem(id) {
+        const it = state.items.find(i => i.id === id);
+        if (it) { it.completed = !it.completed; persist(); render(); }
+      }
+
+      function deleteItem(id) {
+        state.items = state.items.filter(i => i.id !== id);
+        persist();
+        render();
+      }
+
+      function updateItem(id, newText) {
+        const it = state.items.find(i => i.id === id);
+        if (!it) return;
+        const t = newText.trim();
+        if (!t) return; // ignore empty edits
+        it.text = t;
+        persist();
+        render();
+      }
+
+      function clearCompleted() {
+        state.items = state.items.filter(i => !i.completed);
+        persist();
+        render();
+      }
+
+      function setFilter(f) {
+        if (f !== 'all' && f !== 'active' && f !== 'completed') return;
+        state.filter = f;
+        persist();
+        render();
+      }
+
+      function filteredItems() {
+        switch (state.filter) {
+          case 'active': return state.items.filter(i => !i.completed);
+          case 'completed': return state.items.filter(i => i.completed);
+          default: return state.items;
+        }
+      }
+
+      function itemsLeftCount() {
+        return state.items.reduce((acc, i) => acc + (i.completed ? 0 : 1), 0);
+      }
+
+      function render() {
+        // Attempt to preserve focus for common interactions
+        const active = document.activeElement;
+        let preserve = null;
+        if (active) {
+          if (active === $input) {
+            preserve = { type: 'input' };
+          } else {
+            const li = active.closest('li.item');
+            if (li) {
+              const id = li.dataset.id;
+              if (active.classList.contains('chk')) preserve = { type: 'chk', id };
+            }
+          }
+        }
+
+        // List
+        const items = filteredItems();
+        $list.innerHTML = '';
+        const frag = document.createDocumentFragment();
+        for (const i of items) {
+          const li = document.createElement('li');
+          li.className = 'item' + (i.completed ? ' completed' : '');
+          li.dataset.id = i.id;
+
+          // checkbox
+          const chk = document.createElement('input');
+          chk.type = 'checkbox';
+          chk.className = 'chk';
+          chk.checked = i.completed;
+          chk.setAttribute('aria-label', ''); // cleared in favor of labelledby
+
+          // text
+          const text = document.createElement('div');
+          text.className = 'text';
+          const textId = `text-${i.id}`;
+          text.id = textId;
+          text.textContent = i.text;
+
+          // Associate checkbox with its text for better a11y
+          chk.setAttribute('aria-labelledby', textId);
+          chk.addEventListener('change', () => toggleItem(i.id));
+
+          // actions
+          const actions = document.createElement('div');
+          actions.className = 'row';
+
+          const editBtn = document.createElement('button');
+          editBtn.className = 'icon-btn';
+          editBtn.type = 'button';
+          editBtn.title = 'Edit task';
+          editBtn.setAttribute('aria-label', 'Edit task');
+          const editIcon = document.createElement('span');
+          editIcon.className = 'icon';
+          editIcon.setAttribute('aria-hidden', 'true');
+          editIcon.textContent = '✏️';
+          const editText = document.createElement('span');
+          editText.textContent = 'Edit';
+          editBtn.append(editIcon, editText);
+          editBtn.addEventListener('click', () => beginEdit(i.id, li, i.text));
+
+          const delBtn = document.createElement('button');
+          delBtn.className = 'icon-btn danger';
+          delBtn.type = 'button';
+          delBtn.title = 'Delete task';
+          delBtn.setAttribute('aria-label', 'Delete task');
+          const delIcon = document.createElement('span');
+          delIcon.className = 'icon';
+          delIcon.setAttribute('aria-hidden', 'true');
+          delIcon.textContent = '🗑️';
+          const delText = document.createElement('span');
+          delText.textContent = 'Delete';
+          delBtn.append(delIcon, delText);
+          delBtn.addEventListener('click', () => deleteItem(i.id));
+
+          actions.append(editBtn, delBtn);
+          li.append(chk, text, actions);
+          frag.append(li);
+        }
+        $list.append(frag);
+
+        // Count with proper pluralization
+        const count = itemsLeftCount();
+        $countNumber.textContent = String(count);
+        $countLabel.textContent = count === 1 ? 'item left' : 'items left';
+
+        // Filters
+        for (const b of $filters) {
+          const active = b.dataset.filter === state.filter;
+          b.setAttribute('aria-pressed', String(active));
+        }
+
+        // Buttons state
+        $clear.disabled = state.items.every(i => !i.completed);
+        $addBtn.disabled = !$input.value.trim();
+
+        // Restore focus if possible
+        if (preserve) {
+          if (preserve.type === 'input') {
+            $input.focus();
+          } else if (preserve.type === 'chk' && preserve.id) {
+            const el = $list.querySelector(`li.item[data-id="${preserve.id}"] .chk`);
+            if (el) el.focus();
+          }
+        }
+      }
+
+      function beginEdit(id, li, currentText) {
+        const textEl = li.querySelector('.text');
+        const actions = li.querySelector('.row');
+        if (!textEl || !actions) return;
+
+        // Replace text with input
+        const input = document.createElement('input');
+        input.className = 'edit-input';
+        input.value = currentText;
+        input.setAttribute('aria-label', 'Edit todo');
+        textEl.replaceWith(input);
+        input.focus();
+        input.select();
+
+        // Replace actions with Save/Cancel while editing
+        actions.innerHTML = '';
+
+        const saveBtn = document.createElement('button');
+        saveBtn.className = 'icon-btn';
+        saveBtn.type = 'button';
+        const saveIcon = document.createElement('span');
+        saveIcon.className = 'icon';
+        saveIcon.setAttribute('aria-hidden', 'true');
+        saveIcon.textContent = '💾';
+        const saveText = document.createElement('span');
+        saveText.textContent = 'Save';
+        saveBtn.append(saveIcon, saveText);
+        saveBtn.addEventListener('click', () => {
+          const v = input.value.trim();
+          if (!v) { input.focus(); return; }
+          updateItem(id, v);
+        });
+
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'icon-btn';
+        cancelBtn.type = 'button';
+        const cancelIcon = document.createElement('span');
+        cancelIcon.className = 'icon';
+        cancelIcon.setAttribute('aria-hidden', 'true');
+        cancelIcon.textContent = '↩️';
+        const cancelText = document.createElement('span');
+        cancelText.textContent = 'Cancel';
+        cancelBtn.append(cancelIcon, cancelText);
+        cancelBtn.addEventListener('click', () => { render(); });
+
+        actions.append(saveBtn, cancelBtn);
+
+        const finishOnEnter = (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault(); saveBtn.click();
+          } else if (e.key === 'Escape') {
+            e.preventDefault(); render();
+          }
+        };
+        input.addEventListener('keydown', finishOnEnter);
+        input.addEventListener('blur', () => {
+          // Commit on blur if value is non-empty; otherwise revert
+          if (document.activeElement !== saveBtn && document.activeElement !== cancelBtn) {
+            const v = input.value.trim();
+            if (v) updateItem(id, v); else render();
+          }
+        }, { once: true });
+      }
+
+      // Events
+      $form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const v = $input.value.trim();
+        if (!v) return;
+        // Clear input before addItem so render() can disable the button correctly
+        $input.value = '';
+        addItem(v);
+      });
+
+      $input.addEventListener('input', () => {
+        $addBtn.disabled = !$input.value.trim();
+      });
+
+      for (const b of $filters) {
+        b.addEventListener('click', () => setFilter(b.dataset.filter));
+      }
+
+      $clear.addEventListener('click', clearCompleted);
+
+      // Initial render
+      render();
+    })();
+  </script>
+</body>
+</html>
