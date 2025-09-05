@@ -3,6 +3,8 @@ Simple todo app testing Qodo AI agent
 
 
 # Qodo To-Do App – Testing Notes
+* Installed Qodo Gen extension in VS Code successfully
+* Signed in successfully
 * AI agent created the app successfully  
 * Everything was created in one file (`index.html` with HTML, CSS, and JS)  
 * Added screenshots in the `Screenshots` folder  
@@ -255,3 +257,7 @@ Install and run tests:
 > open terminal
 > npm install
 > npm test
+
+
+
+
