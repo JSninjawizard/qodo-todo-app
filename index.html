@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Todo App</title>
-  <!-- Content Security Policy: allow self and inline for this single-file app -->
+  <!-- Content Security Policy: allow self and inline for this single-file app. For production, externalize CSS/JS and use nonces/hashes instead of 'unsafe-inline'. -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; base-uri 'self'; form-action 'self'">
   <style>
     :root {
@@ -19,6 +19,10 @@
       --border: #1f2937;       /* gray-800 */
       --shadow: 0 10px 25px rgba(0,0,0,.35);
       --radius: 12px;
+      /* Centralized layer colors */
+      --layer-1: #0b1222; /* panels, inputs */
+      --layer-2: #0a1323; /* edit input */
+      --layer-3: #0f1627; /* buttons, filters bg */
     }
 
     * { box-sizing: border-box; }
@@ -72,13 +76,17 @@
       box-shadow: 0 8px 16px rgba(56,189,248,.35), inset 0 -2px 6px rgba(0,0,0,.25);
     }
 
-    .title h1 {
-      font-size: 20px;
-      font-weight: 800;
-      margin: 0;
-    }
+    .title h1 { font-size: 20px; font-weight: 800; margin: 0; }
 
     .muted { color: var(--muted); }
+
+    /* Visually hidden utility for accessible labels */
+    .sr-only {
+      position: absolute !important;
+      width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0 0 1px 1px); clip-path: inset(50%);
+      white-space: nowrap; border: 0;
+    }
 
     form#todo-form {
       display: grid;
@@ -89,7 +97,7 @@
     .input {
       display: flex;
       align-items: center;
-      background: #0b1222;
+      background: var(--layer-1);
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 8px 10px;
@@ -117,10 +125,21 @@
     }
     .btn-primary:disabled { opacity: .6; cursor: not-allowed; }
 
+    /* Strong, consistent focus indicator */
+    .icon-btn:focus-visible,
+    .filter:focus-visible,
+    .btn-primary:focus-visible,
+    .edit-input:focus-visible,
+    .chk:focus-visible,
+    #todo-input:focus-visible {
+      outline: 2px solid var(--accent-2);
+      outline-offset: 2px;
+    }
+
     main { padding: 10px; }
 
     .panel {
-      background: #0b1222;
+      background: var(--layer-1);
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 6px;
@@ -143,16 +162,14 @@
     .item .text { word-break: break-word; }
     .item.completed .text { text-decoration: line-through; color: #6b7280; }
 
-    .chk {
-      width: 18px; height: 18px; accent-color: var(--success);
-    }
+    .chk { width: 18px; height: 18px; accent-color: var(--success); }
 
     .row { display: flex; align-items: center; gap: 8px; }
 
     .icon-btn {
       appearance: none;
       border: 1px solid var(--border);
-      background: #0f1627;
+      background: var(--layer-3);
       color: var(--text);
       border-radius: 8px;
       padding: 6px 8px;
@@ -175,7 +192,7 @@
       margin-top: 8px;
     }
 
-    .filters { display: inline-flex; gap: 6px; background: #0f1627; padding: 4px; border-radius: 999px; border: 1px solid var(--border); }
+    .filters { display: inline-flex; gap: 6px; background: var(--layer-3); padding: 4px; border-radius: 999px; border: 1px solid var(--border); }
     .filter {
       padding: 6px 12px;
       border-radius: 999px;
@@ -185,13 +202,13 @@
       color: var(--muted);
       font-weight: 600;
     }
-    .filter[aria-pressed="true"] { background: #0b1222; color: var(--text); border: 1px solid var(--border); }
+    .filter[aria-pressed="true"] { background: var(--layer-1); color: var(--text); border: 1px solid var(--border); }
 
     .count { color: var(--muted); font-size: 14px; }
 
     .edit-input {
       width: 100%;
-      background: #0a1323;
+      background: var(--layer-2);
       color: var(--text);
       border: 1px solid var(--border);
       border-radius: 6px;
@@ -215,24 +232,25 @@
         <h1>Todos</h1>
         <span class="muted">Fast, simple, and local</span>
       </div>
-      <form id="todo-form" autocomplete="off" aria-label="Add a new task">
-        <div class="input" role="group" aria-label="New todo">
-          <input id="todo-input" name="todo" type="text" placeholder="What needs to be done?" aria-label="Todo text" />
+      <form id="todo-form" aria-label="Add a new task">
+        <div class="input">
+          <label for="todo-input" class="sr-only">New todo</label>
+          <input id="todo-input" name="todo" type="text" placeholder="What needs to be done?" />
         </div>
         <button class="btn-primary" type="submit" id="add-btn">Add</button>
       </form>
     </header>
     <main>
       <section class="panel">
-        <ul id="todo-list" aria-live="polite" aria-relevant="additions removals"></ul>
+        <ul id="todo-list" aria-live="polite" aria-relevant="additions removals text"></ul>
         <div class="controls">
-          <div class="count"><span id="items-left">0</span> <span id="items-left-label">items left</span></div>
-          <div class="filters" aria-label="Filters">
+          <div class="count" role="status" aria-live="polite"><span id="items-left">0</span> <span id="items-left-label">items left</span></div>
+          <div class="filters" role="group" aria-label="Filter tasks">
             <button class="filter" type="button" data-filter="all" aria-pressed="true">All</button>
             <button class="filter" type="button" data-filter="active" aria-pressed="false">Active</button>
             <button class="filter" type="button" data-filter="completed" aria-pressed="false">Completed</button>
           </div>
-          <button id="clear-completed" class="icon-btn" type="button" title="Clear completed tasks">
+          <button id="clear-completed" class="icon-btn" type="button">
             <span class="icon" aria-hidden="true">🧹</span>
             <span>Clear completed</span>
           </button>
@@ -343,16 +361,17 @@
 
       function render() {
         // Attempt to preserve focus for common interactions
-        const active = document.activeElement;
+        const activeEl = document.activeElement;
         let preserve = null;
-        if (active) {
-          if (active === $input) {
+        if (activeEl) {
+          if (activeEl === $input) {
             preserve = { type: 'input' };
           } else {
-            const li = active.closest('li.item');
+            const li = activeEl.closest('li.item');
             if (li) {
               const id = li.dataset.id;
-              if (active.classList.contains('chk')) preserve = { type: 'chk', id };
+              if (activeEl.classList.contains('chk')) preserve = { type: 'chk', id };
+              else if (activeEl.matches('button.icon-btn') && activeEl.dataset.action) preserve = { type: 'action', id, action: activeEl.dataset.action };
             }
           }
         }
@@ -384,14 +403,10 @@
           chk.addEventListener('change', () => toggleItem(i.id));
 
           // actions
-          const actions = document.createElement('div');
-          actions.className = 'row';
-
           const editBtn = document.createElement('button');
           editBtn.className = 'icon-btn';
           editBtn.type = 'button';
-          editBtn.title = 'Edit task';
-          editBtn.setAttribute('aria-label', 'Edit task');
+          editBtn.dataset.action = 'edit';
           const editIcon = document.createElement('span');
           editIcon.className = 'icon';
           editIcon.setAttribute('aria-hidden', 'true');
@@ -404,8 +419,7 @@
           const delBtn = document.createElement('button');
           delBtn.className = 'icon-btn danger';
           delBtn.type = 'button';
-          delBtn.title = 'Delete task';
-          delBtn.setAttribute('aria-label', 'Delete task');
+          delBtn.dataset.action = 'delete';
           const delIcon = document.createElement('span');
           delIcon.className = 'icon';
           delIcon.setAttribute('aria-hidden', 'true');
@@ -431,8 +445,8 @@
 
         // Filters
         for (const b of $filters) {
-          const active = b.dataset.filter === state.filter;
-          b.setAttribute('aria-pressed', String(active));
+          const isActive = b.dataset.filter === state.filter;
+          b.setAttribute('aria-pressed', String(isActive));
         }
 
         // Buttons state
@@ -445,6 +459,9 @@
             $input.focus();
           } else if (preserve.type === 'chk' && preserve.id) {
             const el = $list.querySelector(`li.item[data-id="${preserve.id}"] .chk`);
+            if (el) el.focus();
+          } else if (preserve.type === 'action' && preserve.id && preserve.action) {
+            const el = $list.querySelector(`li.item[data-id="${preserve.id}"] button.icon-btn[data-action="${preserve.action}"]`);
             if (el) el.focus();
           }
         }

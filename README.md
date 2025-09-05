@@ -118,105 +118,87 @@ _All issues below were automatically detected by the `/fix` workflow._
 - ❓ Suggestion: Remove or leverage for event delegation  
 
 
-### fix workflow
-### 1. Misuse of role="application"
-- ✅ Detected by /fix workflow
-- 🔍 Root container uses `role="application"`, which interferes with screen readers
-- 🐛 Accessibility issue, not a runtime bug
-- ❓ Suggestion: Remove role and use semantic HTML
 
-### 2. Redundant double render on submit
-- ✅ Detected by /fix workflow
-- 🔍 `addItem()` calls `render()`, and submit handler also calls `render()`
-- 🐛 Causes two renders for a single action
-- ❓ Suggestion: Call render once (either in `addItem()` or in handler)
 
-### 3. Unused variable in beginEdit
-- ✅ Detected by /fix workflow
-- 🔍 `const prevActions = actions.cloneNode(true)` never used
-- 🐛 Dead code, potential lint warning
-- ❓ Suggestion: Remove unused variable
+#### /fix workflow issues found:
+_All issues below were automatically detected by the `/fix` workflow._
 
-### 4. Buttons missing type="button"
-- ✅ Detected by /fix workflow
-- 🔍 Non-submit buttons default to type="submit"
-- 🐛 Risk of unintended form submissions
-- ❓ Suggestion: Add `type="button"` to all non-submit buttons
+1. Misuse of role="application"  
+- 🔍 Root container uses `role="application"`, which interferes with screen readers  
+- 🐛 Accessibility issue, not a runtime bug  
+- ❓ Suggestion: Remove role and use semantic HTML  
 
-### 5. Potential focus loss on re-renders
-- ✅ Detected by /fix workflow
-- 🔍 Full list re-renders clear focus state
-- 🐛 Degrades keyboard/screen reader usability
-- ❓ Suggestion: Preserve focus or re-focus after render
+2. Redundant double render on submit  
+- 🔍 `addItem()` calls `render()`, and submit handler also calls `render()`  
+- 🐛 Causes two renders for a single action  
+- ❓ Suggestion: Call render once (either in `addItem()` or in handler)  
 
-### 6. Non-contextual checkbox label
-- ✅ Detected by /fix workflow
-- 🔍 Checkbox label is generic (“Mark completed”)
-- 🐛 Ambiguous for screen readers
-- ❓ Suggestion: Associate label with task text dynamically
+3. Unused “actions” element created in render()  
+- 🔍 `actions` div created but never appended, while `actionsWrap` is used instead  
+- 🐛 Dead code and confusing  
+- ❓ Suggestion: Remove unused `actions` variable  
 
-### 7. Filter controls semantics and keyboard interactions
-- ✅ Detected by /fix workflow
-- 🔍 Filters use buttons with `role="toolbar"`
-- 🐛 Lacks proper keyboard navigation
-- ❓ Suggestion: Use `radiogroup` with radio buttons or improve keyboard support
+4. Redundant title and aria-label on action buttons  
+- 🔍 Buttons like Edit/Delete have both `title` and `aria-label`  
+- 🐛 Redundant and noisy for screen readers  
+- ❓ Suggestion: Remove `title` and keep `aria-label` or visible text  
 
-### 8. innerHTML used for static button content
-- ✅ Detected by /fix workflow
-- 🔍 Buttons created with `innerHTML`
-- 🐛 Potential XSS / CSP issue
-- ❓ Suggestion: Use `createElement` + `textContent`
+5. Over-specified role="group" on input wrapper  
+- 🔍 Input wrapper groups a single field with `role="group"`  
+- 🐛 Adds unnecessary verbosity to accessibility tree  
+- ❓ Suggestion: Remove `role="group"` and use a proper visible or hidden label  
 
-### 9. localStorage.setItem not guarded
-- ✅ Detected by /fix workflow
-- 🔍 No error handling for quota/private mode
-- 🐛 May throw exceptions
-- ❓ Suggestion: Wrap in try/catch
+6. Filters container lacks grouping semantics  
+- 🔍 Filters visually grouped but not announced as such  
+- 🐛 Screen readers miss context  
+- ❓ Suggestion: Add `role="group"` and a label to filters container  
 
-### 10. CSS overflow: clip may reduce compatibility
-- ✅ Detected by /fix workflow
-- 🔍 Uses `overflow: clip`
-- 🐛 Limited browser support
-- ❓ Suggestion: Add fallback (e.g., `overflow: hidden`)
+7. “Items left” region not announced to screen readers  
+- 🔍 Count changes not reliably announced  
+- 🐛 aria-live applied to list instead of count  
+- ❓ Suggestion: Add `role="status"` or `aria-live` to the count element  
 
-### 11. Pluralization of “items left”
-- ✅ Detected by /fix workflow
-- 🔍 Always shows “items left”
-- 🐛 Wrong grammar when count is 1
-- ❓ Suggestion: Add singular/plural logic
+8. aria-relevant may miss text updates  
+- 🔍 UL uses `aria-relevant="additions removals"` only  
+- 🐛 Text updates (e.g., edits) may not be announced  
+- ❓ Suggestion: Include `text` in `aria-relevant`  
 
-### 12. ID generation not robust
-- ✅ Detected by /fix workflow
-- 🔍 Uses `Date.now + Math.random`
-- 🐛 Risk of collisions
-- ❓ Suggestion: Use `crypto.randomUUID()`
+9. Full re-render of list on each update  
+- 🔍 Entire list rebuilt on every change  
+- 🐛 Inefficient and reduces screen reader announcements  
+- ❓ Suggestion: Perform targeted DOM updates or restore focus more comprehensively  
 
-### 13. Inline style on Delete button
-- ✅ Detected by /fix workflow
-- 🔍 Style applied with `delBtn.style.color`
-- 🐛 Breaks maintainability/theming
-- ❓ Suggestion: Move to CSS class
+10. Limited focus restoration  
+- 🔍 Focus restored only for input and checkboxes  
+- 🐛 Action buttons lose focus, disrupting workflows  
+- ❓ Suggestion: Expand logic to restore focus for active action buttons  
 
-### 14. Content Security Policy (CSP) missing
-- ✅ Detected by /fix workflow
-- 🔍 No CSP defined
-- 🐛 Higher XSS risk if app is served
-- ❓ Suggestion: Add restrictive CSP meta tag
+11. Form autocomplete disabled  
+- 🔍 `autocomplete="off"` on form#todo-form  
+- 🐛 Prevents autofill, harms usability  
+- ❓ Suggestion: Remove `autocomplete="off"` or use proper attributes  
 
-### 15. Overly broad aria-live region
-- ✅ Detected by /fix workflow
-- 🔍 `aria-live="polite"` applied to container
-- 🐛 Excessive screen reader announcements
-- ❓ Suggestion: Limit aria-live to item count or status region
+12. New-todo input uses aria-label instead of label  
+- 🔍 Input named only with `aria-label`  
+- 🐛 Less standard, weaker semantics  
+- ❓ Suggestion: Use `<label>` with `for/id` and remove `aria-label`  
 
-### 16. Inlined CSS/JS reduces cacheability and maintainability
-- ✅ Detected by /fix workflow
-- 🔍 All styles/scripts inline in `index.html`
-- 🐛 Poor caching and CSP compatibility
-- ❓ Suggestion: Extract into separate files
+13. Missing explicit focus-visible styles  
+- 🔍 Default outlines only  
+- 🐛 Inconsistent and low-contrast focus states  
+- ❓ Suggestion: Add explicit `:focus-visible` styles for buttons/inputs  
 
-### 17. Minor: dataset id on li not used elsewhere
-- ✅ Detected by /fix workflow
-- 🔍 `li.dataset.id` unused
-- 🐛 Redundant code
-- ❓ Suggestion: Remove or leverage for event delegation
+14. CSP allows 'unsafe-inline'  
+- 🔍 CSP permits inline scripts and styles  
+- 🐛 Weakens protections  
+- ❓ Suggestion: Externalize CSS/JS and use nonces/hashes in production  
+
+15. Color literals not centralized  
+- 🔍 Hard-coded colors (#0b1222, #0a1323, #0f1627) in CSS  
+- 🐛 Reduces maintainability and theming flexibility  
+- ❓ Suggestion: Replace with CSS variables  
+
+16. Variable naming clarity (“active” shadowing)  
+- 🔍 `active` used for both `document.activeElement` and loop variable  
+- 🐛 Confusing and error-prone  
+- ❓ Suggestion: Rename loop variable to `isActive`  
