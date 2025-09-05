@@ -261,3 +261,17 @@ Install and run tests:
 
 
 
+#### Qodo Merge Integration 
+1.  Qodo Merge Installation process:
+github marketplave > Qodo Merge > Add
+
+2. Install verification - screenshot added to `Screenshots/Qodo Merge Pro/` folder, filename is `verification.png`
+
+3. PR link:
+https://github.com/JSninjawizard/qodo-todo-app/pull/1
+
+4. Results of /review, /describe and /improve commands have been added as screenshots to `Screenshots/Qodo Merge Pro` folder each screenshot is named respectively.
+
+
+
+
