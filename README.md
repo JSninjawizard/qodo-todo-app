@@ -275,3 +275,135 @@ https://github.com/JSninjawizard/qodo-todo-app/pull/1
 
 
 
+
+#### Customer Support Analysis - Qodo Merge Issue
+1. Describe your initial investigation steps
+Answer: 
+* Confirm installation
+* Check permissions/repository configuration
+* Test commands manually
+* Open a fresh PR 
+* Ask to share the Pull Request link, share screenshots
+
+2. List specific questions you would ask Paul
+Answer:
+[a.] Can you confirm Qodo Merge appears in your repo under:
+Repo -> Settings -> GitHub Apps → Qodo Merge?
+[b.] During setup, did you grant read/write access to: pull requests, code, issues, and discussions?
+[c.] Share current state of Permission settings and Repository access sections in your repo?
+[d.] Walk me through the way you opened a new Pull Request, what branch you targeted?
+[e.] Share if adding comment manually (eg: /describe, /improve, etc) on your Pull Request triggers Qodo bot?
+
+3. Expalain your diagnostic approach and reasoning
+Resasoning is to triage from broad to specific:
+
+* Is the Qodo Merge Pro actually installed
+at the repo-level? (install state)
+* Does it have the right permissions & repo access? (capability)
+* Fashion the PR was created in, does it trigger automatic runs? Does it show any Qodo bot logs/messages (trigger)
+* Does a manual slash command work? (connectivity / webhook / bot health)
+* If something still fails, examine logs (GitHub app permissions, webhook deliveries, Qodo activity). (evidence)
+
+
+
+
+#### Customer Response Email - Support Request
+Hi Paul,
+
+Thanks for reaching out and for giving Qodo Merge Pro a try — I’d be happy to help get automatic reviews running smoothly for you.
+
+From what you described, there are a few possible reasons why reviews aren’t triggering automatically on your pull requests:
+
+* The Qodo Merge GitHub App might not be installed on the repository itself.
+
+* Permissions may be limited (read-only vs. read/write).
+
+* Auto-reviews could be restricted by repo settings (branch, labels, or config).
+
+To narrow this down quickly, could you please:
+
+Confirm Qodo Merge appears in your repo under Repo → Settings  → GitHub Apps → Qodo Merge.
+
+Share the current Permissions and Repository access state for the app (a screenshot works great).
+
+Let me know how you opened your test PR (new vs. reopened, target branch, draft or ready).
+
+Try adding a comment /describe on your PR and let me know if Qodo Merge replies.
+
+This will tell us whether the app is connected properly, and whether the issue is installation, permissions, or just configuration. If manual commands work but auto doesn’t, we can walk through enabling auto-mode for your repo.
+
+Once I have this info, I can give you exact next steps to resolve it.
+
+Looking forward to your reply,
+Noam
+Customer Support | Qodo
+
+
+
+#### Configuration Support Question
+Customer Email:
+
+"How can I set the suggestions score threshold to 8 in my PR agent configuration?"
+
+Answer:
+Subject: Setting Suggestion Score Threshold in Qodo Merge
+Hello and thanks for reaching out to us! Here’s how to set the suggestion score threshold to 8:
+
+Check if your repo already has a config file (.qodo.yml or .pr-agent-config.yaml) in the root:
+
+If it exists: Open it and add or update the following section:
+
+review:
+  suggestions:
+    score_threshold: 8
+
+
+Commit and push the changes.
+
+If it doesn’t exist: Create a new file named .qodo.yml in the repo root with the same snippet above, commit, and push.
+
+Open a new PR — Qodo Merge will now filter suggestions and only show those with a score of 8 or higher.
+
+✅ Notes / Other cases:
+Threshold only affects new pull requests. Old PRs won’t update automatically.
+
+No other workflow or auto-review settings are required for this change.
+
+That’s it! You’ll now see only high-quality suggestions in your PRs.
+
+Best regards,
+Noam
+Customer Support | Qodo
+
+
+
+#### Missing Extension Icon - Daniel's Issue
+Daniel (3-month Qodo Gen user): "The Qodo Gen extension disappeared from my left navigation bar yesterday. I can see it's still installed in my extensions list, but I can't access the interface anymore. I've tried restarting VS Code but that didn't work."
+
+Answer:
+* Issue Reproduction:
+
+I would: 
+1. Make sure VS Code is updated to the latest stable version.
+2. Open VS Code with the same OS and environment as the user.
+3. Check if Qodo Gen appears in the Extensions panel but is missing from the Activity Bar / left nav. (right click on activity bar --> check if Qodo Gen is selected)
+5. Verify that commands (Ctrl+Shift+P → type “Qodo Gen”) show options of "Qodo Gen"
+
+
+Solution & Troubleshooting Process
+Step 1: Confirm everything works on latest VS Code
+Ensure the extension functions correctly in your own environment with the same VS Code version.
+
+Step 2: Check Activity Bar visibility
+Right-click left nav bar → ensure “Qodo Gen” is checked.
+If Activity Bar hidden → View → Appearance → Show Activity Bar.
+
+Step 3: Reload window
+Ctrl+Shift+P (Cmd+Shift+P on Mac) → Developer: Reload Window.
+
+Step 4:  Check logs
+View --> Output --> Log (Extension Host) for extension errors if problem persists.
+
+Step 5: Reinstall as last resort
+Uninstall Qodo Gen → reload VS Code → reinstall → reload.
+
