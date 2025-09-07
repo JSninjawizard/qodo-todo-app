@@ -259,6 +259,8 @@ Install and run tests:
 > npm test
 
 
+2. Qodo Merge Integration - Setup & Command Testing
+
 
 
 #### Qodo Merge Integration 
